@@ -77,22 +77,8 @@ The primary objective of this project is to develop a system that accurately ide
 
 ---
 
-## Summary
-Completed so far:
-- Initial research and literature review.
-- Dataset options explored.
-- Selected KNN + PCA for the initial model.
-- Designed threshold-based unknown face detection.
-- Planned deployment architecture.
-
-Next steps:
-- Finalize dataset and train the model.
-- Integrate the model into a web application.
-
----
-
 ## Contributors : (Group-5)
-Md Mofidul Hassan
-Md. Shahadat Hossain
-Barshon Basak
-KM Rayed Zakwan
+- Md Mofidul Hassan
+- Md. Shahadat Hossain
+- Barshon Basak
+- KM Rayed Zakwan
