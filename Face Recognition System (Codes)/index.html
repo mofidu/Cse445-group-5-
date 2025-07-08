@@ -1,0 +1,84 @@
+   <!DOCTYPE html>
+   <html lang="en">
+   <head>
+       <meta charset="UTF-8">
+       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <title>Face Recognition System</title>
+       <link rel="stylesheet" href="css/styles.css">
+   </head>
+   <body>
+       <header>
+           <div class="container">
+               <div class="header-content">
+                   <div class="logo">Face Recognition By ABSR</div>
+                   <nav>
+                       <ul class="nav-links">
+                           <li><a href="#home">Home</a></li>
+                           <li><a href="#recognize">Recognize</a></li>
+                           <li><a href="#about">About</a></li>
+                       </ul>
+                   </nav>
+               </div>
+           </div>
+       </header>
+
+       <main>
+           <div class="container">
+               <!-- Hero Section -->
+               <section class="hero" id="home">
+                   <h1>Face Recognition</h1>
+                   <div class="features">
+                       <div class="feature-card">
+                           <span class="feature-icon">🎯</span>
+                           <h3>High Accuracy</h3>
+                           <p>Advanced KNN algorithm ensures precise face recognition with minimal false positives</p>
+                       </div>
+                       <div class="feature-card">
+                           <span class="feature-icon">⚡</span>
+                           <h3>Real-time Processing</h3>
+                           <p>Fast recognition processing for instant results and seamless user experience</p>
+                       </div>
+                       <div class="feature-card">
+                           <span class="feature-icon">🔒</span>
+                           <h3>Secure & Private</h3>
+                           <p>Your data is processed securely with privacy-first approach and encrypted storage</p>
+                       </div>
+                   </div>
+               </section>
+
+               <!-- Recognition Section -->
+               <section class="action-section" id="recognize">
+                   <h2>🔍 Face Recognition</h2>
+                   <p>Upload an image to identify faces using the trained model.</p>
+                   <div class="upload-area" id="recognizeUpload">
+                       <span class="upload-icon">🔍</span>
+                       <div class="upload-text">Drop image for recognition</div>
+                       <div class="upload-subtext">Upload a clear image with visible faces for best results.</div>
+                       <button class="upload-btn" onclick="document.getElementById('recognizeFiles').click()">
+                           Choose Image to Recognize
+                       </button>
+                       <input type="file" id="recognizeFiles" class="file-input" accept="image/*">
+                   </div>
+                   <div class="loading-spinner" id="recognizeLoader"></div>
+                   <div class="progress-bar" id="recognizeProgress">
+                       <div class="progress-fill"></div>
+                   </div>
+                   <div class="status-message" id="recognizeStatus"></div>
+                   <div class="results-area" id="recognizeResults">
+                       <h3>Recognition Results</h3>
+                       <div id="recognizeResultsList"></div>
+                   </div>
+               </section>
+           </div>
+       </main>
+
+       <footer>
+           <div class="container">
+               <p>&copy; 2025 Recognition System. Developed By Adnan, Barshon, Showrov, Zakwan</p>
+           </div>
+       </footer>
+
+       <script src="js/script.js"></script>
+   </body>
+   </html>
+   
