@@ -1,0 +1,329 @@
+<!-- <!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Face Prediction Demo — KNN / SVM / FaceNet</title>
+  <style>
+    :root {
+      --bg: #0f172a;          /* slate-900 */
+      --card: #111827;        /* gray-900 */
+      --muted: #94a3b8;       /* slate-400 */
+      --text: #e5e7eb;        /* gray-200 */
+      --accent: #22d3ee;      /* cyan-400 */
+      --ring: rgba(34, 211, 238, .4);
+      --ok: #22c55e;          /* green-500 */
+      --warn: #f59e0b;        /* amber-500 */
+      --err: #ef4444;         /* red-500 */
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1200px 1200px at 90% -10%, rgba(34,211,238,.12), transparent),
+                  radial-gradient(900px 900px at -10% 10%, rgba(168,85,247,.12), transparent),
+                  var(--bg);
+      color: var(--text);
+    }
+    .container {
+      max-width: 960px; margin: 40px auto; padding: 24px; border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.005));
+      border: 1px solid rgba(255,255,255,.06);
+      box-shadow: 0 20px 50px rgba(0,0,0,.35);
+    }
+    h1 { margin: 0 0 6px; font-size: clamp(22px, 3vw, 30px); letter-spacing: .3px; }
+    .subtitle { margin: 0 0 22px; color: var(--muted); font-size: 14px; }
+
+    .form {
+      display: grid; gap: 18px; align-items: start; grid-template-columns: 1fr auto;
+    }
+    .filebox {
+      display: grid; gap: 10px;
+      padding: 16px; background: var(--card); border-radius: 16px; border: 1px solid rgba(255,255,255,.06);
+    }
+    .filebox label { font-size: 14px; color: var(--muted); }
+    .filebtn {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: transparent; color: var(--text); border: 1px dashed rgba(255,255,255,.18);
+      padding: 12px 14px; border-radius: 12px; cursor: pointer; width: fit-content;
+    }
+    .filebtn:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+    input[type="file"] { display: none; }
+
+    .submit {
+      align-self: stretch; padding: 14px 18px; border: none; border-radius: 12px; cursor: pointer;
+      font-weight: 600; letter-spacing: .2px; color: #0b1220; background: linear-gradient(180deg, #67e8f9, #22d3ee);
+      box-shadow: 0 6px 22px rgba(34,211,238,.35);
+    }
+    .submit:disabled { opacity: .6; cursor: not-allowed; }
+
+    .preview {
+      margin-top: 12px; display: grid; place-items: center; overflow: hidden;
+      background: #0b1020; border: 1px solid rgba(255,255,255,.06); border-radius: 14px; min-height: 160px;
+    }
+    .preview img { max-height: 240px; max-width: 100%; display: block; }
+
+    .results {
+      margin-top: 22px; display: grid; gap: 16px; grid-template-columns: repeat(3, 1fr);
+    }
+    @media (max-width: 800px) { .form { grid-template-columns: 1fr; } .results { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--card); border: 1px solid rgba(255,255,255,.06); border-radius: 16px;
+      padding: 16px; display: grid; gap: 10px; min-height: 120px;
+    }
+    .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .12em; }
+    .value { font-size: clamp(18px, 2.5vw, 24px); font-weight: 700; }
+    .status { font-size: 12px; color: var(--muted); }
+    .pill { display: inline-block; font-size: 11px; padding: 4px 8px; border-radius: 999px; background: rgba(255,255,255,.06); }
+
+    .toast { margin-top: 16px; font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main class="container" role="main">
+    <h1>Face Prediction</h1>
+    <p class="subtitle">Upload a picture and submit. The predicted name will appear under each model: <strong>KNN</strong>, <strong>SVM</strong>, and <strong>FaceNet</strong>.</p>
+
+    
+    <form id="predict-form" class="form" aria-label="Prediction form">
+      <div class="filebox">
+        <label for="file-input">Picture input</label>
+        <label class="filebtn" for="file-input" id="file-label">📷 Choose image…</label>
+        <input id="file-input" name="image" type="file" accept="image/*" required />
+        <div class="preview" id="preview" aria-live="polite" aria-atomic="true">
+          <span style="color: var(--muted);">No image selected</span>
+        </div>
+      </div>
+      <button class="submit" id="submit-btn" type="submit">Submit</button>
+    </form>
+
+    
+    <section class="results" aria-label="Prediction results">
+      <article class="card" aria-live="polite">
+        <div class="label">KNN</div>
+        <div class="value" id="out-knn">—</div>
+        <div class="status"><span class="pill" id="stat-knn">idle</span></div>
+      </article>
+      <article class="card" aria-live="polite">
+        <div class="label">SVM</div>
+        <div class="value" id="out-svm">—</div>
+        <div class="status"><span class="pill" id="stat-svm">idle</span></div>
+      </article>
+      <article class="card" aria-live="polite">
+        <div class="label">FaceNet</div>
+        <div class="value" id="out-facenet">—</div>
+        <div class="status"><span class="pill" id="stat-facenet">idle</span></div>
+      </article>
+    </section>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </main>
+
+  <script>
+    // ---- Configuration ----
+    const USE_MOCK = false; // set true to test UI without a backend
+    const ENDPOINT = "/api/predict"; // Django: map this to your view
+
+    // ---- Helpers ----
+    const $ = (sel) => document.querySelector(sel);
+    function setStatus(which, text) { $(`#stat-${which}`).textContent = text; }
+    function setValue(which, text)  { $(`#out-${which}`).textContent  = text; }
+    function resetOutputs() { ["knn","svm","facenet"].forEach(k => { setStatus(k, "idle"); setValue(k, "—"); }); }
+
+    // Image preview
+    const fileInput = $("#file-input");
+    const fileLabel = $("#file-label");
+    const preview   = $("#preview");
+    fileInput.addEventListener("change", () => {
+      resetOutputs();
+      const f = fileInput.files?.[0];
+      if (!f) { preview.innerHTML = '<span style="color: var(--muted);">No image selected</span>'; fileLabel.textContent = '📷 Choose image…'; return; }
+      fileLabel.textContent = `📷 ${f.name}`;
+      const url = URL.createObjectURL(f);
+      preview.innerHTML = `<img alt="Preview" src="${url}">`;
+    });
+
+    // Submit to backend (or mock)
+    const form = $("#predict-form");
+    const submitBtn = $("#submit-btn");
+    const toast = $("#toast");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const f = fileInput.files?.[0];
+      if (!f) { toast.textContent = "Please choose an image first."; return; }
+
+      ["knn","svm","facenet"].forEach(k => setStatus(k, "predicting…"));
+      submitBtn.disabled = true; toast.textContent = "Uploading and predicting…";
+
+      try {
+        let data;
+        if (USE_MOCK) {
+          await new Promise(r => setTimeout(r, 800));
+          data = { knn: "Alice", svm: "Alice", facenet: "Alice" };
+        } else {
+          const formData = new FormData();
+          formData.append("image", f);
+          const res = await fetch(ENDPOINT, { method: "POST", body: formData });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          data = await res.json();
+        }
+        setValue("knn", data.knn ?? "—"); setStatus("knn", "done");
+        setValue("svm", data.svm ?? "—"); setStatus("svm", "done");
+        setValue("facenet", data.facenet ?? data.faceNet ?? "—"); setStatus("facenet", "done");
+        toast.textContent = "Predictions updated.";
+      } catch (err) {
+        console.error(err);
+        ["knn","svm","facenet"].forEach(k => setStatus(k, "error"));
+        toast.textContent = `Something went wrong: ${err.message}`;
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html> -->
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Face Prediction — KNN / SVM / FaceNet</title>
+  <style>
+    :root {
+      --bg: #0f172a;          /* slate-900 */
+      --card: #111827;        /* gray-900 */
+      --muted: #94a3b8;       /* slate-400 */
+      --text: #e5e7eb;        /* gray-200 */
+      --accent: #22d3ee;      /* cyan-400 */
+      --ring: rgba(34, 211, 238, .4);
+      --ok: #22c55e;          /* green-500 */
+      --warn: #f59e0b;        /* amber-500 */
+      --err: #ef4444;         /* red-500 */
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1200px 1200px at 90% -10%, rgba(34,211,238,.12), transparent),
+                  radial-gradient(900px 900px at -10% 10%, rgba(168,85,247,.12), transparent),
+                  var(--bg);
+      color: var(--text);
+    }
+    .container {
+      max-width: 960px; margin: 40px auto; padding: 24px; border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.005));
+      border: 1px solid rgba(255,255,255,.06);
+      box-shadow: 0 20px 50px rgba(0,0,0,.35);
+    }
+    h1 { margin: 0 0 6px; font-size: clamp(22px, 3vw, 30px); letter-spacing: .3px; }
+    .subtitle { margin: 0 0 22px; color: var(--muted); font-size: 14px; }
+
+    .form {
+      display: grid; gap: 18px; align-items: start; grid-template-columns: 1fr auto;
+    }
+    .filebox {
+      display: grid; gap: 10px;
+      padding: 16px; background: var(--card); border-radius: 16px; border: 1px solid rgba(255,255,255,.06);
+    }
+    .filebox label { font-size: 14px; color: var(--muted); }
+    .filebtn {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: transparent; color: var(--text); border: 1px dashed rgba(255,255,255,.18);
+      padding: 12px 14px; border-radius: 12px; cursor: pointer; width: fit-content;
+    }
+    .filebtn:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+    input[type="file"] { display: none; }
+
+    .submit {
+      align-self: stretch; padding: 14px 18px; border: none; border-radius: 12px; cursor: pointer;
+      font-weight: 600; letter-spacing: .2px; color: #0b1220; background: linear-gradient(180deg, #67e8f9, #22d3ee);
+      box-shadow: 0 6px 22px rgba(34,211,238,.35);
+    }
+    .submit:disabled { opacity: .6; cursor: not-allowed; }
+
+    .preview {
+      margin-top: 12px; display: grid; place-items: center; overflow: hidden;
+      background: #0b1020; border: 1px solid rgba(255,255,255,.06); border-radius: 14px; min-height: 160px;
+    }
+    .preview img { max-height: 240px; max-width: 100%; display: block; }
+
+    .results {
+      margin-top: 22px; display: grid; gap: 16px; grid-template-columns: repeat(3, 1fr);
+    }
+    @media (max-width: 800px) { .form { grid-template-columns: 1fr; } .results { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--card); border: 1px solid rgba(255,255,255,.06); border-radius: 16px;
+      padding: 16px; display: grid; gap: 10px; min-height: 120px;
+    }
+    .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .12em; }
+    .value { font-size: clamp(18px, 2.5vw, 24px); font-weight: 700; }
+    .status { font-size: 12px; color: var(--muted); }
+    .pill { display: inline-block; font-size: 11px; padding: 4px 8px; border-radius: 999px; background: rgba(255,255,255,.06); }
+
+    .toast { margin-top: 16px; font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main class="container" role="main">
+    <h1>Face Prediction</h1>
+    <p class="subtitle">Upload a picture and submit. Results appear below.</p>
+
+    <!-- Important: method POST + enctype for file upload -->
+    <form class="form" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="filebox">
+        <label for="file-input">Picture input</label>
+        <label class="filebtn" for="file-input" id="file-label">📷 Choose image…</label>
+        <input id="file-input" name="image" type="file" accept=".jpg,.jpeg" required />
+        <div class="preview" id="preview" aria-live="polite" aria-atomic="true">
+          {% if preview_data_url %}
+            <img alt="Preview" src="{{ preview_data_url }}">
+          {% else %}
+            <span style="color: var(--muted);">No image selected</span>
+          {% endif %}
+        </div>
+      </div>
+      <button class="submit" type="submit">Submit</button>
+    </form>
+
+    <!-- Output Cells -->
+    <section class="results" aria-label="Prediction results">
+      <article class="card" aria-live="polite">
+        <div class="label">KNN</div>
+        <div class="value">{{ knn|default:"—" }}</div>
+        <div class="status"><span class="pill">{% if knn %}done{% else %}idle{% endif %}</span></div>
+      </article>
+      <article class="card" aria-live="polite">
+        <div class="label">SVM</div>
+        <div class="value">{{ svm|default:"—" }}</div>
+        <div class="status"><span class="pill">{% if svm %}done{% else %}idle{% endif %}</span></div>
+      </article>
+      <article class="card" aria-live="polite">
+        <div class="label">FaceNet</div>
+        <div class="value">{{ facenet|default:"—" }}</div>
+        <div class="status"><span class="pill">{% if facenet %}done{% else %}idle{% endif %}</span></div>
+      </article>
+    </section>
+  </main>
+
+  <!-- Optional tiny JS just for local preview before submit (no API) -->
+  <script>
+    const fileInput = document.getElementById("file-input");
+    const preview = document.getElementById("preview");
+    const fileLabel = document.getElementById("file-label");
+    fileInput.addEventListener("change", () => {
+      const f = fileInput.files?.[0];
+      if (!f) { preview.innerHTML = '<span style="color: var(--muted);">No image selected</span>'; return; }
+      fileLabel.textContent = `📷 ${f.name}`;
+      const url = URL.createObjectURL(f);
+      preview.innerHTML = `<img alt="Preview" src="${url}">`;
+    });
+  </script>
+</body>
+</html>
