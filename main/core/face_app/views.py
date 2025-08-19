@@ -1,7 +1,4 @@
 from django.shortcuts import render
-
-# Create your views here.
-from django.shortcuts import render
 from django.conf import settings
 
 import sys, base64
@@ -91,17 +88,30 @@ def knn_pred_and_score(xq, X_ref, y_ref, k=3):
 
 # ----------------- For FaceNet -----------------
 
-# import torch
-# from torchvision import transforms
+import torch
+from torchvision import transforms
 # from facenet_pytorch import InceptionResnetV1
+from facenet_pytorch import InceptionResnetV1
 
-# def embed_face_rgb(face_rgb_160: np.ndarray) -> np.ndarray:
-#     """Input: numpy RGB [160,160,3] -> Output: numpy [512]."""
-#     pil = Image.fromarray(face_rgb_160)
-#     x = preprocess(pil).unsqueeze(0).to(device)  # [1,3,160,160]
-#     emb = resnet(x)                              # [1,512]
-#     return emb.squeeze(0).cpu().numpy()
+device = "cuda" if torch.cuda.is_available() else "cpu"
+resnet = InceptionResnetV1(pretrained='vggface2', classify=False).eval().to(device)
 
+preprocess = transforms.Compose([
+    transforms.Resize((160, 160)),
+    transforms.ToTensor()   # converts to [0,1] float tensor, channels-first
+    # facenet-pytorch model handles its internal normalization
+])
+
+def embed_face_rgb(face_rgb_160: np.ndarray) -> np.ndarray:
+    """Input: numpy RGB [160,160,3] -> Output: numpy [512]."""
+    pil = Image.fromarray(face_rgb_160)
+    x = preprocess(pil).unsqueeze(0).to(device)  # [1,3,160,160]
+    emb = resnet(x)                              # [1,512]
+    return emb.squeeze(0).detach().cpu().numpy()
+
+clf = joblib.load(settings.MODEL_DIR / "facenet_knn_model.pkl")   # KNeighborsClassifier
+le  = joblib.load(settings.MODEL_DIR / "label_encoder.pkl")     # LabelEncoder
+TAU_facenet = joblib.load(settings.MODEL_DIR / "unknown_threshold.pkl")     # float threshold
 # ----------------- Main view -----------------
 def home(request):
     context = {}
@@ -138,6 +148,20 @@ def home(request):
         except Exception:
             svm_name = "Error"
 
+        # 3) embed
+        emb = embed_face_rgb(face).reshape(1, -1)  # [1,512]
+
+
+        #facenet_prediction
+        pred_id = clf.predict(emb)[0]
+        label = le.inverse_transform([pred_id])[0]
+        dists, _ = clf.kneighbors(emb, n_neighbors=1, return_distance=True)
+        dist = float(dists[0][0])
+        if dist < TAU_facenet:
+            facenet_name = label
+        else:
+            facenet_name = "unknown_label"
+
         # 6) KNN prediction
         # Your refs may be in PCA space or raw space. Detect and use the right one:
         if isinstance(knn_refs, dict):
@@ -161,9 +185,6 @@ def home(request):
                     knn_name = "unknown_label"
         else:
             knn_name = "Error"
-
-        # 7) FaceNet left empty for now
-        facenet_name = "—"
 
         # 8) send to template
         context.update({
