@@ -1,0 +1,64 @@
+Libraries and Tools Used
+1. Core Python Utilities
+
+os, glob → File and directory handling
+
+math, random → Mathematical operations and randomness
+
+collections (Counter, defaultdict) → Counting and mapping utilities
+
+pathlib.Path → Object-oriented file path handling
+
+2. Numerical & Data Handling
+
+NumPy (numpy) → Array operations, numerical computations
+
+joblib → Saving and loading trained models efficiently
+
+3. Image Processing
+
+OpenCV (cv2) → Image preprocessing, resizing, face cropping
+
+PIL (Pillow) → Image loading, transformations, EXIF handling (Image, ImageOps)
+
+4. Deep Learning & Face Recognition
+
+PyTorch (torch) → Deep learning framework
+
+torchvision.transforms → Image transformation utilities
+
+facenet-pytorch → Pretrained InceptionResnetV1 model for embeddings
+
+mtcnn → Face detection with MTCNN (Multi-task Cascaded Convolutional Networks)
+
+tqdm → Progress bar for training/evaluation loops
+
+5. Machine Learning (scikit-learn)
+
+Model Selection
+
+train_test_split → Splitting datasets
+
+GridSearchCV, StratifiedKFold → Hyperparameter tuning and cross-validation
+
+Algorithms
+
+KNeighborsClassifier → KNN classifier
+
+SVC → Support Vector Machine classifier
+
+Preprocessing
+
+LabelEncoder → Encoding categorical labels into numerical form
+
+Evaluation Metrics
+
+accuracy_score
+
+f1_score
+
+precision_recall_fscore_support
+
+confusion_matrix
+
+classification_report
